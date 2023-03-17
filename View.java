@@ -22,34 +22,38 @@ public class View extends JComponent {
 	private V3D[] velocities = new V3D[3];
 	private double[] masses = new double[2];
 	private CSystem system;
+	private int numBodies;
 
-	public View(int w, int h) {
+	public View(int w, int h, int numBodies) {
+		this.numBodies = numBodies;
 		this.w = w;
 		this.h = h;
 		// create background
 		bg = new Rectangle2D.Double(0, 0, w, h);
+		positions = new V3D[numBodies+1];
+		velocities = new V3D[numBodies+1];
+		masses = new double[numBodies];
 	}
 
 	public void startScene() {
 		// initialize scene
-		scene = new Scene(w, h, positions[2], velocities[2]);
+		scene = new Scene(w, h, positions[numBodies], velocities[numBodies]);
 		// create celestial system
 		system = new CSystem();
-		CBody body1 = new CBody(10.0, masses[0] * Math.pow(10, 10), system);
-		body1.addPoint(positions[0]);
-		body1.setVelocity(velocities[0]);
-		CBody body2 = new CBody(10.0, masses[1] * Math.pow(10, 10), system);
-		body2.addPoint(positions[1]);
-		body2.setVelocity(velocities[1]);
-		system.addBody(body1);
-		system.addBody(body2);
-		// add to scene
-		scene.addShape(body1);
-		scene.addShape(body2);
+		for(int i = 0; i< numBodies; i++) {
+			//init values
+			CBody b = new CBody(10.0, masses[i] * Math.pow(10, 10), system);
+			b.addPoint(positions[i]);
+			b.setVelocity(velocities[i]);
+			//add to csystem
+			system.addBody(b);
+			//add to scene
+			scene.addShape(b);
+		}
 	}
 	
 	public void updateSystem() {
-		scene.updateCameraPosRot(positions[2], velocities[2]);
+		scene.updateCameraPosRot(positions[numBodies], velocities[numBodies]);
 		for(int i = 0; i< positions.length-1; i++) {
 			CBody b = system.getBody(i);
 			b.setPoint(0, positions[i]);

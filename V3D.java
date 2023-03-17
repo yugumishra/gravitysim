@@ -68,8 +68,6 @@ public class V3D {
 		// z -> 0 + ysin(angle) + zcos(angle)
 		//input angle is in degrees, because it is easier to manipulate that way
 		//convert the angle into radians first
-		//i dont know why the angle is reversed on x-axis but it is so we multilpy the angle by -1
-		angle *= -1;
 		angle = Math.toRadians(angle);
 		V3D rotatedPoint = new V3D(0,0,0);
 		rotatedPoint.setX(this.getX());

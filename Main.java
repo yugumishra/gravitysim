@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -33,9 +34,10 @@ public class Main extends JFrame implements ActionListener, ChangeListener {
 	private JTextField[] subHeaders;
 	private int currentBody;
 	private double[][] values;
+	private int[][][] bounds;
 	private View v;
 
-	public Main() {
+	public Main(int numBodies) {
 		currentBody = 0;
 		this.setSize(w, h);
 		uiPanel = new JPanel();
@@ -47,17 +49,43 @@ public class Main extends JFrame implements ActionListener, ChangeListener {
 		headers = new JTextField[3];
 		subHeaders = new JTextField[3 * 2 + 1];
 		inputs = new ArrayList<JTextField>();
-		int[][][] bounds = {
-				{ { -w / 2, w / 2 }, { -h / 2, h / 2 }, { 0, 1000 }, { -100, 100 }, { -100, 100 }, { -100, 100 },
-						{ 0, 25000 } },
-				{ { -w / 2, w / 2 }, { -h / 2, h / 2 }, { 0, 1000 }, { -100, 100 }, { -100, 100 }, { -100, 100 },
-						{ 0, 25000 } } };
-		double[][] vals = { 
-				{ 0, 0, Camera.distFromPlane(h), 0, 0, 0, 25000 },
-				{ 200, 0, Camera.distFromPlane(h), 0, 9.13099118387, 0, 0.0000000001 }, 
-				{ 0, 0, 0, 0, 0, 0}
-				};
-		values = vals;
+		
+		bounds = new int[numBodies+1][7][2];
+		values = new double[numBodies+1][7];
+		int baseValue = (numBodies+1)/2 * -200;
+		String[] options = new String[numBodies+1];
+		
+		for(int i = 0; i< numBodies;i++) {
+			int[][] b = {
+					{-w/2,w/2}, {-h/2,h/2}, {0,1000}, {-100,100}, {-100,100}, {-100,100}, {0,25000}
+			};
+			bounds[i] = b;
+			
+			double[] v = {
+					baseValue + (i+1) * 200, 0, Camera.distFromPlane(h),
+					0,0,0,
+					10
+			};
+			values[i] = v;
+			
+			options[i] = "Body " + (i+1);
+			options[numBodies] = "Camera";
+		}
+		//seventh bound value is irrelevant here because the camera doesn't have a 7th value to change
+		//however i am adding it for consistency with the main 3d array so to as not make it ragged
+		int[][] b = {
+				{-w/2,w/2}, {-h/2,h/2}, {0,1000}, {-180,180}, {-180,180}, {-180,180}, {0,0}
+		};
+		bounds[numBodies] = b;
+		
+		//same applies with actual value array
+		double[] vals = {
+				0,0,0,
+				0,0,0,
+				0,
+		};
+		
+		values[numBodies] = vals;
 		int count = 0;
 		for (int j = 0; j < 3; j++) {
 			for (int k = 0; k < 3; k++) {
@@ -127,7 +155,7 @@ public class Main extends JFrame implements ActionListener, ChangeListener {
 			uiPanel.add(headers[count]);
 			count++;
 		}
-		String[] options = { "Body 1", "Body 2", "Camera" };
+		
 		dropDown = new JComboBox<String>(options);
 		dropDown.setBounds(0, 0, 300, 100);
 		dropDown.addActionListener(this);
@@ -141,7 +169,7 @@ public class Main extends JFrame implements ActionListener, ChangeListener {
 		pauseButton.setText("Pause/Play");
 		pauseButton.addActionListener(this);
 		this.add(pauseButton);
-		v = new View(w, h);
+		v = new View(w, h, numBodies);
 		sendInputs();
 		v.startScene();
 		this.add(v);
@@ -155,7 +183,11 @@ public class Main extends JFrame implements ActionListener, ChangeListener {
 	}
 
 	public static void main(String[] args) {
-		new Main();
+		Scanner input = new Scanner(System.in);
+		System.out.println("Enter the number of bodies you want in your system: ");
+		int numBodies = input.nextInt();
+		new Main(numBodies);
+		input.close();
 	}
 
 	@Override
@@ -169,8 +201,16 @@ public class Main extends JFrame implements ActionListener, ChangeListener {
 		}
 		if (e.getSource().equals(dropDown)) {
 			currentBody = dropDown.getSelectedIndex();
+			for (int i = 0; i < sliders.size()-1; i++) {
+				JTextField t = inputs.get(i);
+				t.setText(String.valueOf(values[currentBody][i]));
+				JSlider s = sliders.get(i);
+				s.setMinimum(bounds[currentBody][i][0]);
+				s.setMaximum(bounds[currentBody][i][1]);
+				s.setValue((int) Math.floor(values[currentBody][i]));
+			}
 			// reupdate the values in textfields and sliders
-			if (dropDown.getSelectedIndex() < 2) {
+			if (dropDown.getSelectedIndex() < values.length-1) {
 				if(headers[1].getText().equals("Velocity: ") == false) {
 					headers[1].setText("Velocity: ");
 					headers[2].setVisible(true);
@@ -187,12 +227,6 @@ public class Main extends JFrame implements ActionListener, ChangeListener {
 			} else {
 				// this means camera
 				headers[1].setText("Rotation: ");
-				for (int i = 0; i < sliders.size()-1; i++) {
-					JTextField t = inputs.get(i);
-					t.setText(String.valueOf(values[currentBody][i]));
-					JSlider s = sliders.get(i);
-					s.setValue((int) Math.floor(values[currentBody][i]));
-				}
 				headers[2].setVisible(false);
 				subHeaders[6].setVisible(false);
 				sliders.get(6).setVisible(false);

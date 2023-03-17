@@ -35,7 +35,9 @@ public class Sphere extends Shape {
 		V3D copy = new V3D(pointToDraw.getX(), pointToDraw.getY(), pointToDraw.getZ());
 		copy.multiplyScalar(-1);
 		diff.add(copy);
-		 
+		
+		//catch an edge case where the object is behind the camera and should not be rendered
+		
 		
 		double ratio = (radius / diff.getDistance());
 		double leg = Math.sqrt(Math.pow(planePoint.getX(), 2) + Math.pow(camera.distFromPlane(), 2));
